@@ -39,7 +39,7 @@ app.get("/", async (req, res) => {
 
 app.post("/", async (req, res) => {
 	try {
-		await addNote(request.body.title)
+		await addNote(req.body.title)
 		res.render("index", {
 			title: "Express App",
 			notes: await getNotes(),
