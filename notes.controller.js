@@ -4,59 +4,52 @@ const chalk = require("chalk");
 
 const notesPath = path.join(__dirname, "db.json");
 
-async function addNote(title) {
+async function addNotes(title) {
   const notes = await getNotes();
   const note = { title, id: Date.now().toString() };
 
   notes.push(note);
-  await saveNotes(notes);
-  console.log(chalk.green.inverse("Note was added!"));
-}
+  await fs.writeFile(notesPath, JSON.stringify(notes))
 
-async function removeNote(id) {
-  const notes = await getNotes();
-  const filtered = notes.filter((note) => note.id !== id);
-
-  await saveNotes(filtered);
-  console.log(chalk.red(`note with id: ${id} removed!`));
-}
-
-async function saveNotes(notes) {
-  await fs.writeFile(notesPath, JSON.stringify(notes));
+	console.log(chalk.green.inverse("Note added!"))
 }
 
 async function getNotes() {
-  const notes = await fs.readFile(notesPath, { encoding: "utf-8" });
-
-  return Array.isArray(JSON.parse(notes)) ? JSON.parse(notes) : [];
+	const notes = await fs.readFile(notesPath, { encoding: "utf-8" })
+	return Array.isArray(JSON.parse(notes)) ? JSON.parse(notes) : []
 }
 
-async function editNote(id, title) {
-  const notes = await getNotes();
-  const updatedNotes = notes.map((note) => {
-    if (note.id === id) {
-      return { ...note, title: title };
-    } else {
-      return note;
-    }
-  });
+async function editNote(id, body) {
+	const notes = await getNotes()
+	const index = notes.findIndex(note => note.id === id)
+	notes[index] = {...notes[index], ...body}
+	try {
+		await fs.writeFile(notesPath, JSON.stringify(notes))
+		console.log(chalk.yellow.inverse(`Note by id: ${id} edit`))
+	} catch (error) {
+		console.log("Error write update file", error)
+	}
+}
 
-  await saveNotes(updatedNotes);
-  console.log(chalk.green.inverse(`Note id:${id} updated!`));
+async function removeNote(id) {
+	const notes = await getNotes()
+	const newArrayNotes = notes.filter(note => note.id !== id)
+	await fs.writeFile(notesPath, JSON.stringify(newArrayNotes))
+	console.log(chalk.red.inverse(`Note ${id} deleted!`))
 }
 
 async function printNotes() {
-  const notes = await getNotes();
-
-  console.log(chalk.bgGray("List notes:"));
-  notes.forEach((note) => {
-    console.log(`${chalk.green(`id: ${note.id}`)} - ${chalk.blue(note.title)}`);
-  });
+	const notes = await getNotes()
+	console.log(chalk.blue.inverse("This is list of notes: "))
+	notes.forEach(note => {
+		console.log(chalk.yellow.inverse(`Title: ${note.title}, ID: ${note.id}, Tag: ${note.tag}`))
+	})
 }
 
 module.exports = {
-  addNote,
-  removeNote,
-  printNotes,
-  editNote,
-};
+	addNotes,
+	printNotes,
+	removeNote,
+	getNotes,
+	editNote
+}
